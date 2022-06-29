@@ -1,0 +1,2 @@
+class SingletonExistException(Exception):
+    pass

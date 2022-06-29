@@ -1,0 +1,2 @@
+class LimitSizeException(Exception):
+    pass
