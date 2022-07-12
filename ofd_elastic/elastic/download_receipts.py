@@ -34,7 +34,6 @@ class DownloadReceipts:
         self._max_fd: int = 0
         self._iteration: int = 1
         self._num_iter: int = 0
-        self._set_range_unload()
 
     @staticmethod
     def _set_size(size: int) -> int:
@@ -107,6 +106,7 @@ class DownloadReceipts:
         return self._elastic.query(request, self._index)['hits']['hits']
 
     def __iter__(self) -> Iterable:
+        self._set_range_unload()
         return iter(()) if self._max_fd + self._min_fd == 0 else self
 
     def _get_next(self) -> list[Receipt]:
@@ -125,5 +125,4 @@ class DownloadReceipts:
     def __next__(self) -> list[Receipt]:
         if self._num_iter != self._iteration:
             return self._get_next()
-        self._set_range_unload()
         raise StopIteration
