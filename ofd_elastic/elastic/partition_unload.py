@@ -1,13 +1,9 @@
 from copy import deepcopy
 from math import ceil
-from typing import NamedTuple, Optional, Generator
+from typing import Optional, Generator
 
-from ofd_elastic.elastic.elastic import Elastic
-
-
-class ResultAggregations(NamedTuple):
-    head_agg: str
-    sub_agg: Optional[str]
+from ofd_elastic.elastic import PartitionAgg
+from ofd_elastic import Elastic
 
 
 class PartitionUnload:
@@ -16,7 +12,8 @@ class PartitionUnload:
                  '_request',
                  '_index',
                  '_head_agg',
-                 '_sub_agg')
+                 '_sub_agg',
+                 '_data')
 
     def __init__(self,
                  elastic: Elastic,
@@ -31,28 +28,28 @@ class PartitionUnload:
         self._head_agg: str = head_agg
         # Second aggs have default 20 size
         self._sub_agg: Optional[str] = sub_agg
+        self._data: list[PartitionAgg] = self._create_data()
 
-    def get(self) -> list[ResultAggregations]:
-        collection: list[ResultAggregations] = []
-        for aggregation in self.get_generator():
-            collection += aggregation
-        return collection
+    @property
+    def data(self):
+        return self._data
 
-    def get_generator(self) -> Generator[list[ResultAggregations], None, None]:
+    def to_dict(self) -> dict:
+        return {agg.head_agg: agg.sub_aggs for agg in self._data}
+
+    def _create_data(self) -> list[PartitionAgg]:
+        data: list[PartitionAgg] = []
+        for aggregation in self._get_generator():
+            data += aggregation
+        return data
+
+    def _get_generator(self) -> Generator[list[PartitionAgg], None, None]:
         parts: int = self._get_count_parts()
         return (self._parsing_aggregations(self._get_aggregation_part(num_part, parts)) for num_part in range(parts))
 
-    def _parsing_aggregations(self, aggs: dict) -> list[ResultAggregations]:
-        parsing_list: list[ResultAggregations] = []
-        for value_1 in aggs['name1']['buckets']:
-            if self._sub_agg:
-                parsing_list.extend(
-                    ResultAggregations(value_1['key'], value_2['key']) for value_2 in value_1['name2']['buckets'])
-            else:
-                parsing_list.append(
-                    ResultAggregations(value_1['key'], None)
-                )
-        return parsing_list
+    @staticmethod
+    def _parsing_aggregations(aggs: dict) -> list[PartitionAgg]:
+        return [PartitionAgg.parse_obj(agg) for agg in aggs['name1']['buckets']]
 
     def _get_count_parts(self) -> int:
         agg_value: int = self._elastic.count_unique_per_agg(self._request, self._index)
