@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as description:
 
 setuptools.setup(
     name='ofd_elastic',
-    version='0.0.1',
+    version='0.0.2',
     author='Egor Zhelvakov',
     author_email='egor.zhelvakov@aisa.ru',
     description='OFD package helper for job',
