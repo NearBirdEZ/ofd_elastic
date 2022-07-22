@@ -1,2 +1,2 @@
-from .docs import Receipt
-from .elastic import Elastic
+from .docs import *
+from .elastic import *

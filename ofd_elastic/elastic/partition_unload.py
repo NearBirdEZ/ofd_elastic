@@ -2,8 +2,8 @@ from copy import deepcopy
 from math import ceil
 from typing import Optional, Generator
 
-from ofd_elastic.elastic import PartitionAgg
-from ofd_elastic import Elastic
+from .dto import PartitionAgg
+from . import Elastic
 
 
 class PartitionUnload:
